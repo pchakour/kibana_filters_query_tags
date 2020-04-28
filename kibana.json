@@ -1,0 +1,11 @@
+{
+  "id": "kibanaFiltersQueryTags",
+  "version": "7.6.1",
+  "server": false,
+  "ui": true,
+  "requiredPlugins": [
+    "embeddable",
+    "uiActions"
+  ],
+  "optionalPlugins": []
+}
