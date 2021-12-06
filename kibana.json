@@ -1,11 +1,14 @@
 {
   "id": "kibanaFiltersQueryTags",
-  "version": "7.6.2",
-  "server": false,
+  "version": "4.0.0",
+  "kibanaVersion": "kibana",
+  "server": true,
   "ui": true,
   "requiredPlugins": [
     "embeddable",
-    "uiActions"
+    "uiActions",
+    "data",
+    "fieldFormats"
   ],
   "optionalPlugins": []
 }

@@ -1,21 +1,25 @@
 import {
   PANEL_BADGE_TRIGGER,
-  IEmbeddableSetup,
-  IEmbeddableStart,
+  EmbeddableSetup,
+  EmbeddableStart,
 } from '../../../src/plugins/embeddable/public';
-import { IUiActionsStart, IUiActionsSetup, IAction } from '../../../src/plugins/ui_actions/public';
+import { Action, UiActionsSetup, UiActionsStart } from '../../../src/plugins/ui_actions/public';
 import { CoreSetup, CoreStart, Plugin } from '../../../src/core/public';
 import { FiltersBadge } from './filters_badge';
 import { QueryBadge } from './query_badge';
+import { DataPublicPluginStart } from '../../../src/plugins/data/public';
+import { FieldFormatsStart } from '../../../src/plugins/field_formats/public';
 
 interface SetupDependencies {
-  embeddable: IEmbeddableSetup; // Embeddable are needed because they register basic triggers/actions.
-  uiActions: IUiActionsSetup;
+  embeddable: EmbeddableSetup; // Embeddable are needed because they register basic triggers/actions.
+  uiActions: UiActionsSetup;
 }
 
 interface StartDependencies {
-  embeddable: IEmbeddableStart;
-  uiActions: IUiActionsStart;
+  embeddable: EmbeddableStart;
+  uiActions: UiActionsStart;
+  data: DataPublicPluginStart;
+  fieldFormats: FieldFormatsStart;
 }
 
 export type KibanaFiltersQueryTagsPluginSetup = void;
@@ -33,14 +37,15 @@ export class KibanaFiltersQueryTagsPlugin
 
   public start(
     core: CoreStart,
-    { uiActions }: StartDependencies
+    { uiActions, data, fieldFormats }: StartDependencies
   ): KibanaFiltersQueryTagsPluginStart {
     // @ts-ignore
-    const filtersBadge: IAction = new FiltersBadge({});
+    const filtersBadge: Action = new FiltersBadge(core);
     uiActions.registerAction(filtersBadge);
     uiActions.attachAction(PANEL_BADGE_TRIGGER, filtersBadge.id);
 
-    const queryBadge: IAction = new QueryBadge({});
+    // @ts-ignore
+    const queryBadge: Action = new QueryBadge(core);
     uiActions.registerAction(queryBadge);
     uiActions.attachAction(PANEL_BADGE_TRIGGER, queryBadge.id);
   }
