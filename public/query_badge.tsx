@@ -17,7 +17,20 @@ export class QueryBadge implements Action<ActionContext> {
   constructor(private core: CoreStart) {}
 
   public getDisplayName({ embeddable }: ActionContext) {
-    const query = embeddable.vis.data.searchSource.fields.query;
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    const maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    let query = { query: '' };
+
+    if (vis) {
+      query = vis.query;
+    } else if (lens) {
+      query = lens.query;
+    } else if (maps) {
+      const parsed = JSON.parse(maps);
+      query = parsed.query;
+    }
 
     return query.query;
   }
@@ -28,10 +41,18 @@ export class QueryBadge implements Action<ActionContext> {
 
   public async isCompatible({ embeddable }: ActionContext) {
     const showFiltersQueryTags = this.core.uiSettings.get(UISETTINGS_SHOW_TAGS, true);
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    let maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    if (maps) {
+      maps = JSON.parse(maps);
+    }
+
     return Boolean(
       showFiltersQueryTags &&
         embeddable &&
-        embeddable.vis.data.searchSource.fields.query?.query !== ''
+        (lens?.query.query || maps?.query.query || vis?.query.query)
     );
   }
 

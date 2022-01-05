@@ -55,8 +55,32 @@ export class FiltersBadge implements Action<ActionContext> {
   }
 
   public getDisplayName({ embeddable }: ActionContext) {
-    const filters = embeddable.vis.data.searchSource.fields.filter;
-    filters.map((filter) => (filter.meta.value = getFilterParams(filter)));
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    const maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    let filters = [];
+    let indexPatterns = [];
+
+    if (vis) {
+      filters = vis.filter;
+      indexPatterns = [vis.index];
+    } else if (lens) {
+      filters = lens.filters;
+      indexPatterns = embeddable.getOutput().indexPatterns;
+    } else if (maps) {
+      const parsed = JSON.parse(maps);
+      filters = parsed.filters;
+      indexPatterns = embeddable.getOutput().indexPatterns;
+    }
+
+    filters = filters.map((filter) => ({
+      ...filter,
+      meta: {
+        ...filter.meta,
+        value: getFilterParams(filter),
+      },
+    }));
 
     return (
       <>
@@ -71,9 +95,7 @@ export class FiltersBadge implements Action<ActionContext> {
           >
             <FilterLabel
               filter={filter}
-              valueLabel={getDisplayValueFromFilter(filter, [
-                embeddable.vis.data.searchSource.fields.index,
-              ])}
+              valueLabel={getDisplayValueFromFilter(filter, indexPatterns)}
             />
           </span>
         ))}
@@ -87,12 +109,18 @@ export class FiltersBadge implements Action<ActionContext> {
 
   public async isCompatible({ embeddable }: ActionContext) {
     const showFiltersQueryTags = this.core.uiSettings.get(UISETTINGS_SHOW_TAGS, true);
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    let maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    if (maps) {
+      maps = JSON.parse(maps);
+    }
 
     return Boolean(
       showFiltersQueryTags &&
         embeddable &&
-        embeddable.vis.data.searchSource?.fields?.filter?.length &&
-        embeddable.vis.data.searchSource?.fields?.index
+        (lens?.filters.length || vis?.filter.length || maps?.filters.length)
     );
   }
 

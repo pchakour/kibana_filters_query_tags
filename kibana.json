@@ -1,6 +1,10 @@
 {
   "id": "kibanaFiltersQueryTags",
   "version": "4.0.0",
+  "owner": {
+    "name": "Pharès CHAKOUR",
+    "githubTeam": "pchakour"
+  },
   "kibanaVersion": "kibana",
   "server": true,
   "ui": true,
