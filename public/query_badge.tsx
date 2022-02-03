@@ -52,7 +52,7 @@ export class QueryBadge implements Action<ActionContext> {
     return Boolean(
       showFiltersQueryTags &&
         embeddable &&
-        (lens?.query.query || maps?.query.query || vis?.query.query)
+        (lens?.query?.query || maps?.query?.query || vis?.query?.query)
     );
   }
 
