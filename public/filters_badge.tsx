@@ -120,7 +120,7 @@ export class FiltersBadge implements Action<ActionContext> {
     return Boolean(
       showFiltersQueryTags &&
         embeddable &&
-        (lens?.filters.length || vis?.filter.length || maps?.filters.length)
+        (lens?.filters?.length || vis?.filter?.length || maps?.filters?.length)
     );
   }
 
