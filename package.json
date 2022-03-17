@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "scripts": {
-    "build": "yarn plugin-helpers build -k 7.16.2",
+    "build": "yarn plugin-helpers build -k 7.16.3",
     "plugin-helpers": "node ../../scripts/plugin_helpers",
     "kbn": "node ../../scripts/kbn"
   }
