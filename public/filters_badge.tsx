@@ -1,9 +1,11 @@
 import React from 'react';
+import { getFilterParams } from '@kbn/es-query';
 import { Embeddable } from '../../../src/plugins/embeddable/public';
-import { IAction } from '../../../src/plugins/ui_actions/public';
-import { esFilters } from '../../../src/plugins/data/common/es_query';
-import { FilterLabel } from '../../../src/plugins/data/public/ui/filter_bar/filter_editor/lib/filter_label';
-import { mapFilter } from '../../../src/plugins/data/public/query/filter_manager/lib/map_filter';
+import { Action } from '../../../src/plugins/ui_actions/public';
+import { getDisplayValueFromFilter } from '../../../src/plugins/data/public';
+import { FilterLabel } from '../../../src/plugins/data/public';
+import { CoreStart } from '../../../src/core/public';
+import { UISETTINGS_SHOW_TAGS } from '../common';
 
 const FILTERS_BADGE = 'FILTERS_BADGE';
 
@@ -11,12 +13,12 @@ interface ActionContext {
   embeddable: Embeddable;
 }
 
-export class FiltersBadge implements IAction<ActionContext> {
+export class FiltersBadge implements Action<ActionContext> {
   public readonly type = FILTERS_BADGE;
   public readonly id = FILTERS_BADGE;
   public order = 7;
 
-  constructor({}: {}) {}
+  constructor(private core: CoreStart) {}
 
   private getFilterStyle(position: 'left' | 'middle' | 'right' | 'none') {
     const filterStyle = {
@@ -53,7 +55,32 @@ export class FiltersBadge implements IAction<ActionContext> {
   }
 
   public getDisplayName({ embeddable }: ActionContext) {
-    const filters = embeddable.savedVisualization.searchSource.fields.filter;
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    const maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    let filters = [];
+    let indexPatterns = [];
+
+    if (vis) {
+      filters = vis.filter;
+      indexPatterns = [vis.index];
+    } else if (lens) {
+      filters = lens.filters;
+      indexPatterns = embeddable.getOutput().indexPatterns;
+    } else if (maps) {
+      const parsed = JSON.parse(maps);
+      filters = parsed.filters;
+      indexPatterns = embeddable.getOutput().indexPatterns;
+    }
+
+    filters = filters.map((filter) => ({
+      ...filter,
+      meta: {
+        ...filter.meta,
+        value: getFilterParams(filter),
+      },
+    }));
 
     return (
       <>
@@ -67,10 +94,8 @@ export class FiltersBadge implements IAction<ActionContext> {
             )}
           >
             <FilterLabel
-              filter={mapFilter(filter)}
-              valueLabel={esFilters.getDisplayValueFromFilter(filter, [
-                embeddable.savedVisualization.searchSource.fields.index,
-              ])}
+              filter={filter}
+              valueLabel={getDisplayValueFromFilter(filter, indexPatterns)}
             />
           </span>
         ))}
@@ -83,14 +108,23 @@ export class FiltersBadge implements IAction<ActionContext> {
   }
 
   public async isCompatible({ embeddable }: ActionContext) {
+    const showFiltersQueryTags = this.core.uiSettings.get(UISETTINGS_SHOW_TAGS, true);
+    const lens = embeddable.savedVis?.state;
+    const vis = embeddable.vis?.data.searchSource.fields;
+    let maps = embeddable._savedMap?._attributes.mapStateJSON;
+
+    if (maps) {
+      maps = JSON.parse(maps);
+    }
+
     return Boolean(
-      embeddable &&
-        embeddable.savedVisualization?.searchSource?.fields?.filter?.length &&
-        embeddable.savedVisualization?.searchSource?.fields?.index
+      showFiltersQueryTags &&
+        embeddable &&
+        (lens?.filters?.length || vis?.filter?.length || maps?.filters?.length)
     );
   }
 
   public async execute({ embeddable }: ActionContext) {
-    window.location.href = embeddable.output.editUrl;
+    window.location.href = embeddable.getOutput().editUrl;
   }
 }
